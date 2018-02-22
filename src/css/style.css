@@ -1,0 +1,21 @@
+#pills-tabContent {
+  margin-top: 10px;
+}
+
+#filter {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.runner-item {
+  margin-bottom: 4px;
+}
+
+#bibnumbersPreview {
+  margin-top: 10px;
+}
+
+.fa-move {
+  cursor: move;
+  cursor: -webkit-grabbing;
+}
