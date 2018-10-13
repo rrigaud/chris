@@ -7,6 +7,7 @@
                     <a class="nav-link active" id="Tab_Result_All" data-toggle="pill" href="#Tabpanel_Result_All" role="tab" aria-controls="Tabpanel_Result_All" aria-selected="true">Classement Général</a>
                     <a class="nav-link" each={Race in Races.items} id="{'Tab_Result_' + Race.Race_ID}" data-toggle="pill" href="{'#Tabpanel_Result_' + Race.Race_ID}" role="tab" aria-controls="{'Tabpanel_Result_' + Race.Race_ID}" aria-selected="true">{Race.Name}</a>
                     <button type="button" class="btn btn-outline-warning" style="margin-top: 200px; margin-bottom: 10px;" onclick={ displayPrintResults }><i class="fa fa-print" aria-hidden="true"></i>&nbsp;Imprimer les résultats</button>
+                    <button type="button" class="btn btn-outline-warning" style="margin-top: 200px; margin-bottom: 10px;" onclick={ exportResultsCSV }><i class="fa fa-print" aria-hidden="true"></i>&nbsp;Exporter les résultats (CSV)</button>
                 </div>
             </div>
             <div class="col-7 offset-1">
@@ -24,7 +25,7 @@
                                         </div>
                                         <input value="{Class.School}" type="text" class="form-control" />
                                         <div class="input-group-append">
-                                            <span class="input-group-text">{Class.TotalRank}</span>
+                                            <span class="input-group-text">{Class.TotalRank} ({Class.TotalRunners} élèves)</span>
                                         </div>
                                     </div>
                                 </div>
@@ -37,13 +38,13 @@
                         <div class="card">
                             <div class="card-header">{Race.Name}</div>
                             <div class="card-body">
-                                <div class="input-group input-group-sm" style="margin-bottom: 4px;" each={Class in Results.getClassRanking(Race.Race_ID,6)}>
+                                <div class="input-group input-group-sm" style="margin-bottom: 4px;" each={Class in Results.getClassRanking(Race.Race_ID,6)} if={Class.TotalRank > 0}>
                                     <div class="input-group-prepend">
                                         <span class="input-group-text bg-warning">{Class.Name}</span>
                                     </div>
                                     <input value="{Class.School}" type="text" class="form-control" />
                                     <div class="input-group-append">
-                                        <span class="input-group-text">{Class.TotalRank}</span>
+                                        <span class="input-group-text">{Class.TotalRank} ({Class.TotalRunners} élèves)</span>
                                     </div>
                                 </div>
                             </div>
@@ -146,8 +147,8 @@ this.displayPrintResults = function(e) {
     for (var i = 0 ; i < i_max ; i++) {
         var Rank = i + 1;
         doc.font(Font_Ubuntu)
-            .fontSize(20)
-            .text(Rank.toLocaleString('fr-FR', {minimumIntegerDigits: 2, useGrouping:false}) + '   »    ' + bestClasses[i].Name + ' ( ' + bestClasses[i].School + ' ) avec ' + bestClasses[i].TotalRank + ' points', {align: 'left'})
+            .fontSize(16)
+            .text(Rank.toLocaleString('fr-FR', {minimumIntegerDigits: 2, useGrouping:false}) + '   »    ' + bestClasses[i].Name + ' ( ' + bestClasses[i].School + ' ) avec ' + bestClasses[i].TotalRank + ' points' + ' ( ' + bestClasses[i].TotalRunners + ' élèves)', {align: 'left'})
             .moveDown(0.1);
     }
 
@@ -163,12 +164,15 @@ this.displayPrintResults = function(e) {
         // Classement par classe
         var bestRaceClasses = Results.getClassRanking(Races.items[i].Race_ID,6)
         var j_max = bestRaceClasses.length;
+        var Rank = 0;
         for (var j = 0 ; j < j_max ; j++) {
-            var Rank = j + 1;
-            doc.font(Font_Ubuntu)
-                .fontSize(20)
-                .text(Rank.toLocaleString('fr-FR', {minimumIntegerDigits: 2, useGrouping:false}) + '   »    ' + bestRaceClasses[j].Name + ' ( ' + bestRaceClasses[j].School + ' ) avec ' + bestRaceClasses[j].TotalRank + ' points', {align: 'left'})
-                .moveDown(0.1);
+            if (bestRaceClasses[j].TotalRank > 0) {
+            	Rank++;
+            	doc.font(Font_Ubuntu)
+	                .fontSize(16)
+	                .text(Rank.toLocaleString('fr-FR', {minimumIntegerDigits: 2, useGrouping:false}) + '   »    ' + bestRaceClasses[j].Name + ' ( ' + bestRaceClasses[j].School + ' ) avec ' + bestRaceClasses[j].TotalRank + ' points' + ' ( ' + bestRaceClasses[j].TotalRunners + ' élèves)', {align: 'left'})
+	                .moveDown(0.1);
+            }
         }
         // Classement individuel
         doc.addPage();
@@ -190,6 +194,32 @@ this.displayPrintResults = function(e) {
     // On affiche le document PDF dans la preview
     document.getElementById("resultsPreview").src = PDF_File;
 }
+
+
+/***************************************************************************************************************
+ *  Function : exportResultsCSV
+ * 
+ *  Génère un CSV des résultats
+ *
+ *  Parameters :
+ *    (Objet) e - Evènement de Riot.js
+ */
+this.exportResultsCSV = function(e) {
+    remote.dialog.showSaveDialog(remote.getCurrentWindow(), {
+        title: 'Export CSV des résultats',
+        buttonLabel: 'Exporter le CSV',
+        filters: [{name: 'CSV', extensions: ['csv']},{name: 'Tous les fichiers', extensions: ['*']}]
+        },
+        function (file) {
+            if (file && file.length > 0) {
+                //console.log(file);
+                // Export de la sauvegarde
+                Backup.exportCSV(file);
+            }
+        });
+
+}
+
 
 /***************************************************************************************************************
  *  Function : genResults

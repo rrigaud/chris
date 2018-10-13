@@ -433,17 +433,20 @@ var Results = {
             var j_max = Classes.length;
             // Pour chaque classe
             for (var j = 0 ; j < j_max ; j++) {
-                let TotalRank_To_Add = Results.getClassTotalRank(Classes[j].Name, Classes[j].School, Races.items[i].Race_ID, 6);
+                var Class_Total = Results.getClassTotal(Classes[j].Name, Classes[j].School, Races.items[i].Race_ID, 6);
+                let TotalRank_To_Add =Class_Total.Rank;
+                let TotalRunners_To_Add =Class_Total.Runners;
                 Classes[j].TotalRank = parseInt(Classes[j].TotalRank, 10) + parseInt(TotalRank_To_Add, 10);
+                Classes[j].TotalRunners = parseInt(Classes[j].TotalRunners, 10) + parseInt(TotalRunners_To_Add, 10);
             }
         }
         Classes.sort(compareRanks);
         return Classes
     },
     /***************************************************************************************************************
-    *  Function : getClassTotalRank
+    *  Function : getClassTotal
     *
-    *  Retourne un objet {Class, School, TotalRank} à partir d'un couple (Classe,Collège)
+    *  Retourne un objet { Rank : Rang; Runners : Nombre de coureurs } à partir d'un triplet (Classe,Collège,Course)
     *  et du nombre de coureurs à prendre en compte
     *
     *  Parameters :
@@ -452,7 +455,7 @@ var Results = {
     *    (String) Race_ID - ID de la course
     *    (Integer) Max_Runners - Nombre de coureurs à prendre en compte par classe
     */
-    getClassTotalRank : function (Class, School, Race_ID, Max_Runners) {
+    getClassTotal : function (Class, School, Race_ID, Max_Runners) {
         let Race_Index = Races.getIndexFromRaceID(Race_ID);
         let TotalRank = 0;
         let Nb_Runners = 0;
@@ -470,12 +473,12 @@ var Results = {
                 Nb_Runners++;
             }
         }
-        return TotalRank.toString()
+        return { Rank : TotalRank.toString(), Runners : Nb_Runners }
     },
     /***************************************************************************************************************
     *  Function : getClassRanking
     *
-    *  Retourne un objet {Name, School, TotalRank} à partir d'un couple (Course, Max_Runners)
+    *  Retourne un objet {Name, School, TotalRank, Runners} à partir d'un couple (Course, Max_Runners)
     *  et du nombre de coureurs à prendre en compte
     *
     *  Parameters :
@@ -493,9 +496,10 @@ var Results = {
         }
         var i_max = Classes.length;
         for (var i = 0 ; i < i_max ; i++) {
-            //Pour chaque classe, on récupère son TotalRank
-            let Class_TotalRank = Results.getClassTotalRank(Classes[i].Name, Classes[i].School, Race_ID, Max_Runners);
-            Classes[i].TotalRank = Class_TotalRank;
+            //Pour chaque classe, on récupère son Total.Rank et Total.Runners (Nombre de coureurs du calcul)
+            let Class_Total = Results.getClassTotal(Classes[i].Name, Classes[i].School, Race_ID, Max_Runners);
+            Classes[i].TotalRank = Class_Total.Rank;
+            Classes[i].TotalRunners = Class_Total.Runners;
         }
 
         // On trie les classes par TotalRank croissant
@@ -564,6 +568,57 @@ var Backup = {
         let JSON_Object = { Runners : Runners.items, Races : Races.items }
         let JSON_Data = JSON.stringify(JSON_Object)
         fs.writeFileSync(JSON_File, JSON_Data, "UTF-8");
+    },
+    /***************************************************************************************************************
+    *  Function : exportCSV
+    *
+    *  Exporte les résultats au format CSV
+    *
+    *  Parameters :
+    *    (File Object) CSV_File - Fichier CSV_File à exporter
+    */
+    exportCSV : function (CSV_File) {
+        var bestClasses = Results.getBestClass();
+        let CSV_Data = Backup.convertArrayOfObjectsToCSV(bestClasses);
+        fs.writeFileSync(CSV_File, CSV_Data, "UTF-8");
+    },
+    /***************************************************************************************************************
+    *  Function : convertArrayOfObjectsToCSV
+    *
+    *  Convertit un tableau d'objets au format CSV et le retourne
+    *
+    *  Parameters :
+    *    (Array of Objects) args - Tableau d'objets
+    */
+    convertArrayOfObjectsToCSV : function (args) {
+        var result, ctr, keys, columnDelimiter, lineDelimiter, data;
+
+        data = args.data || null;
+        if (data == null || !data.length) {
+            return null;
+        }
+
+        columnDelimiter = args.columnDelimiter || ',';
+        lineDelimiter = args.lineDelimiter || '\n';
+
+        keys = Object.keys(data[0]);
+
+        result = '';
+        result += keys.join(columnDelimiter);
+        result += lineDelimiter;
+
+        data.forEach(function(item) {
+            ctr = 0;
+            keys.forEach(function(key) {
+                if (ctr > 0) result += columnDelimiter;
+
+                result += item[key];
+                ctr++;
+            });
+            result += lineDelimiter;
+        });
+
+        return result;
     }
 };
 

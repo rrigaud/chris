@@ -31,7 +31,7 @@ function createWindow () {
     mainWindow.loadURL(`file://${__dirname}/src/index.html`)
 
     // Affiche la console  et les DevTools
-    mainWindow.webContents.openDevTools()
+    //mainWindow.webContents.openDevTools()
 
     // Cache la barre de menu
     mainWindow.setMenu(null)
