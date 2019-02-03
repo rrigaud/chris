@@ -16,5 +16,5 @@ Les résultats sont ensuite présentés par course : Individuels et par classe.
 git clone https://github.com/rrigaud/chris
 cd chris
 yarn install
-yarn start
+yarn dev
 ```
