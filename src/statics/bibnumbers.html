@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            @font-face {
+                font-family: "barCode";
+                src: url("./fonts/c39hrp48dhtt.ttf") format("truetype");
+            }
+            @font-face {
+                font-family: "ubuntu";
+                src: url("./fonts/Ubuntu-B.ttf") format("truetype");
+            }
+            body {
+                font-family: "ubuntu";
+            }
+            .groupBar {
+                font-size: 40px;
+                display: flex;
+                justify-content: space-between;
+                border-bottom: 1px solid black;
+                padding-bottom: 10px;
+            }
+            .nameBar {
+                margin-top: 10px;
+                font-size: 70px;
+                display: flex;
+                justify-content: center;
+            }
+            .gender {
+                margin-left: 40px;
+            }
+            .bibNumberBar {
+                margin-top: 60px;
+                display: flex;
+                justify-content: space-between;
+                page-break-after: always;
+            }
+            .barCode {
+                font-family: "barCode";
+                font-size: 340px;
+            }
+            .bibNumber {
+                font-size: 280px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="target">Création des dossards...</div>
+        <script id="template" type="x-tmpl-mustache">
+            {{#bibNumbers}}
+                <div class="groupBar">
+                    <div class="group">{{ group }}</div>
+                    <div class="subgroup">{{ subgroup }}</div>
+                </div>
+                <div class="nameBar">
+                    <div class="name">{{ name }}</div>
+                    <div class="gender">({{ gender }})</div>
+                </div>
+                <div class="bibNumberBar">
+                    <div class="barCode">*{{ bibNumber }}*</div>
+                    <div class="bibNumber">{{ bibNumber }}</div>
+                </div>
+            {{/bibNumbers}}
+        </script>
+        <script src="lib/mustache.min.js"></script>
+        <script src="lib/bibnumbers.js"></script>
+    </body>
+</html>
