@@ -1725,16 +1725,13 @@ export default {
                         title: 'Exporter les dossards au format PDF',
                         buttonLabel: 'Enregistrer',
                         filters: [{ name: 'PDF', extensions: ['pdf'] }, { name: 'Tous les fichiers', extensions: ['*'] }]
-                    }, (file) => {
-                        if (file && file.length > 0) {
-                            const pdfFile = file;
+                    }).then(result => {
+                        if (result.filePath && result.filePath.length > 0) {
+                            const pdfFile = result.filePath;
                             // Transformation HTML > PDF
-                            winBibNumbers.webContents.printToPDF({ landscape: true }, (error, data) => {
-                                if (error) return console.log(error.message);
-
+                            winBibNumbers.webContents.printToPDF({ landscape: true }).then(data => {
                                 fs.writeFile(pdfFile, data, err => {
                                     if (err) return console.log(err.message);
-                                    console.log('Write PDF successfully: ' + pdfFile);
                                     this.$q.notify({
                                         message: `PDF exporté : ${pdfFile}`,
                                         timeout: 5000,
@@ -1755,9 +1752,13 @@ export default {
                                     // Puis de rafraichir en laissant quelques millisecondes...
                                     setTimeout(this.refreshData, 200);
                                 })
+                            }).catch(error => {
+                                console.log(error)
                             })
                         }
-                    });
+                    }).catch(err => {
+                        console.log(err)
+                    })
                 }
             })
         },
@@ -1772,9 +1773,9 @@ export default {
                 title: 'Exporter les dossards au format CSV',
                 buttonLabel: 'Enregistrer',
                 filters: [{ name: 'CSV', extensions: ['csv'] }, { name: 'Tous les fichiers', extensions: ['*'] }]
-            }, (file) => {
-                if (file && file.length > 0) {
-                    const csvFile = file;
+            }).then(result => {
+                if (result.filePath && result.filePath.length > 0) {
+                    const csvFile = result.filePath;
                     const csvRows = [];
                     const iMax = this.selectedRunners.length;
                     for (var i = 0; i < iMax; i++) {
@@ -1801,7 +1802,9 @@ export default {
                             setTimeout(this.refreshData, 200);
                         });
                 }
-            });
+            }).catch(err => {
+                console.log(err)
+            })
         },
         /***************************************************************************************************************
         *  Function : addResult
