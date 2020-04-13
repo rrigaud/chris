@@ -15,7 +15,7 @@ const DAO = {
     *  Données du cross au format JSON :
     *
     *  { runners : [{ runnerID, name, gender, group, subgroup }],
-    *    races : [{ raceID, name, color, nbRunnersToCount, completed :[runnerID], dropped :[runnerID], missing :[runnerID] }] }
+    *    races : [{ raceID, name, color, nbRunnersByGroup, nbRunnersBySubgroup, completed :[runnerID], dropped :[runnerID], missing :[runnerID] }] }
     *
     */
     data: { runners: [], races: [] },
@@ -302,10 +302,11 @@ const DAO = {
     *    (String) raceID - ID de la course
     *    (String) name - Nom de la course
     *    (String) color - Couleur de la course
-    *    (String) nbRunnersToCount - Nombre de coureurs à compter dans le groupe
+    *    (String) nbRunnersByGroup - Nombre de coureurs à compter dans le groupe
+    *    (String) nbRunnersBySubgroup - Nombre de coureurs à compter dans le sous-groupe
     */
-    racesAdd: function (raceID, name, color, nbRunnersToCount) {
-        this.data.races.push({ raceID: raceID, name: name, color: color, nbRunnersToCount: nbRunnersToCount, completed: [], dropped: [], missing: [] });
+    racesAdd: function (raceID, name, color, nbRunnersByGroup, nbRunnersBySubgroup) {
+        this.data.races.push({ raceID: raceID, name: name, color: color, nbRunnersByGroup: nbRunnersByGroup, nbRunnersBySubgroup: nbRunnersBySubgroup, completed: [], dropped: [], missing: [] });
     },
     /***************************************************************************************************************
     *  Function : racesEdit
@@ -316,9 +317,10 @@ const DAO = {
     *    (String) raceID - ID de la course
     *    (String) name - Nom de la course
     *    (String) color - Couleur de la course
-    *    (String) nbRunnersToCount - Nombre de coureurs à compter dans le groupe
+    *    (String) nbRunnersByGroup - Nombre de coureurs à compter dans le groupe
+    *    (String) nbRunnersBySubgroup - Nombre de coureurs à compter dans le sous-groupe
     */
-    racesEdit: function (raceID, name, color, nbRunnersToCount) {
+    racesEdit: function (raceID, name, color, nbRunnersByGroup, nbRunnersBySubgroup) {
         const raceIndex = this.racesGetIndexFromRaceID(raceID);
         // On récupère les tableaux de résultats de la course, sans les changer
         const completed = this.data.races[raceIndex].completed;
@@ -328,7 +330,8 @@ const DAO = {
             raceID: raceID,
             name: name,
             color: color,
-            nbRunnersToCount: nbRunnersToCount,
+            nbRunnersByGroup: nbRunnersByGroup,
+            nbRunnersBySubgroup: nbRunnersBySubgroup,
             completed: completed,
             dropped: dropped,
             missing: missing

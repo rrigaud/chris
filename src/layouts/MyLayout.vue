@@ -427,7 +427,15 @@
                                     Nombre de coureurs à<br>comptabiliser par groupe :
                                 </td>
                                 <td>
-                                    <q-input outlined v-model.number="inputRaceNbRunnersToCount" type="number" @keyup.enter="saveRace" />
+                                    <q-input outlined v-model.number="inputRaceNbRunnersByGroup" type="number" @keyup.enter="saveRace" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Nombre de coureurs à<br>comptabiliser par sous-groupe :
+                                </td>
+                                <td>
+                                    <q-input outlined v-model.number="inputRaceNbRunnersBySubgroup" type="number" @keyup.enter="saveRace" />
                                 </td>
                             </tr>
                         </table>
@@ -708,7 +716,8 @@ export default {
             inputRaceID: '',
             inputRaceName: '',
             inputRaceColor: '',
-            inputRaceNbRunnersToCount: '',
+            inputRaceNbRunnersByGroup: '',
+            inputRaceNbRunnersBySubgroup: '',
             inputResultBibNumber: '',
             dataRunners: DAO.data.runners,
             dataRaces: DAO.data.races,
@@ -846,7 +855,8 @@ export default {
                     sortable: true
                 },
                 { name: 'color', align: 'center', label: 'Couleur', field: 'color', sortable: true },
-                { name: 'nbRunnersToCount', align: 'center', label: 'Nombre de coureurs à prendre en compte', field: 'nbRunnersToCount', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10) },
+                { name: 'nbRunnersByGroup', align: 'center', label: 'Nb coureurs / groupe', field: 'nbRunnersByGroup', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10) },
+                { name: 'nbRunnersBySubgroup', align: 'center', label: 'Nb coureurs / sous-groupe', field: 'nbRunnersBySubgroup', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10) },
                 { name: 'nbCompleted', align: 'center', label: 'Arrivés', field: 'completed', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10), format: (val, row) => `${val.length}` },
                 { name: 'nbDropped', align: 'center', label: 'Abandons', field: 'dropped', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10), format: (val, row) => `${val.length}` },
                 { name: 'nbMissing', align: 'center', label: 'Absents', field: 'missing', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10), format: (val, row) => `${val.length}` }
@@ -1175,7 +1185,8 @@ export default {
             this.inputRaceID = '';
             this.inputRaceName = '';
             this.inputRaceColor = '';
-            this.inputRaceNbRunnersToCount = '';
+            this.inputRaceNbRunnersByGroup = '';
+            this.inputRaceNbRunnersBySubgroup = '';
             // On affiche la fenêtre de dialogue
             this.dialogRaceSave = true;
         },
@@ -1239,7 +1250,8 @@ export default {
             this.inputRaceID = row.raceID;
             this.inputRaceName = row.name;
             this.inputRaceColor = row.color;
-            this.inputRaceNbRunnersToCount = row.nbRunnersToCount;
+            this.inputRaceNbRunnersByGroup = row.nbRunnersByGroup;
+            this.inputRaceNbRunnersBySubgroup = row.nbRunnersBySubgroup;
             // On affiche la fenêtre de dialogue
             this.dialogRaceSave = true;
         },
@@ -1395,12 +1407,12 @@ export default {
                 // On lui attribue un nouveau raceID
                 this.inputRaceID = DAO.racesGetNewRaceID();
                 // Ajout de la course
-                DAO.racesAdd(this.inputRaceID.toString(), this.inputRaceName, this.inputRaceColor, this.inputRaceNbRunnersToCount);
+                DAO.racesAdd(this.inputRaceID.toString(), this.inputRaceName, this.inputRaceColor, this.inputRaceNbRunnersByGroup, this.inputRaceNbRunnersBySubgroup);
                 // On rafraichit l'interface
                 this.refreshDataRaces();
             } else {
                 // On modifie la course
-                DAO.racesEdit(this.inputRaceID.toString(), this.inputRaceName, this.inputRaceColor, this.inputRaceNbRunnersToCount);
+                DAO.racesEdit(this.inputRaceID.toString(), this.inputRaceName, this.inputRaceColor, this.inputRaceNbRunnersByGroup, this.inputRaceNbRunnersBySubgroup);
                 // BUGFIX : Pour rafraichir l'interface sur une édition... obligé de charger n'importe quoi...
                 this.dataRaces = [];
                 // Puis de rafraichir en laissant quelques millisecondes...
@@ -1412,7 +1424,8 @@ export default {
             this.inputRaceID = '';
             this.inputRaceName = '';
             this.inputRaceColor = '';
-            this.inputRaceNbRunnersToCount = '';
+            this.inputRaceNbRunnersByGroup = '';
+            this.inputRaceNbRunnersBySubgroup = '';
             // On ferme la boîte de dialogue de la course
             this.dialogRaceSave = false;
         },
