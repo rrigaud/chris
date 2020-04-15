@@ -21,7 +21,7 @@
                 >
                     <q-tab name="management" label="Gestion du CROSS" icon="settings" />
                     <q-tab name="races" label="Saisie des arrivées" icon="directions_run" />
-                    <q-tab name="results" label="Résultats" icon="equalizer" />
+                    <q-tab name="ranking" label="Classements" icon="equalizer" @click="loadDataRanking" />
                 </q-tabs>
             </q-toolbar>
         </q-header>
@@ -80,7 +80,25 @@
                                                 <q-separator />
                                                 <q-card-actions vertical>
                                                     <q-btn flat label="Supprimer" @click="showDelSelectedRunners" icon="delete_forever" color="negative" />
-                                                    <q-space></q-space>
+                                                    <q-btn-dropdown flat color="primary" label="Attribuer..." icon="edit" style="margin-top: 40px;">
+                                                        <q-list>
+                                                            <q-item clickable v-close-popup @click="showSetGender">
+                                                                <q-item-section>
+                                                                    <q-item-label>... un Genre (M/F)</q-item-label>
+                                                                </q-item-section>
+                                                            </q-item>
+                                                            <q-item clickable v-close-popup @click="showSetGroup">
+                                                                <q-item-section>
+                                                                    <q-item-label>... un Groupe</q-item-label>
+                                                                </q-item-section>
+                                                            </q-item>
+                                                            <q-item clickable v-close-popup @click="showSetSubgroup">
+                                                                <q-item-section>
+                                                                    <q-item-label>... un Sous-groupe</q-item-label>
+                                                                </q-item-section>
+                                                            </q-item>
+                                                        </q-list>
+                                                    </q-btn-dropdown>
                                                     <q-btn flat @click="showAssignBibNumbers" style="margin-top: 40px;">
                                                         <div class="row items-center">
                                                             <q-icon left name="share" />
@@ -89,7 +107,7 @@
                                                             </div>
                                                         </div>
                                                     </q-btn>
-                                                    <q-btn flat @click="exportBibNumbersPDF" style="margin-top: 20px;">
+                                                    <q-btn flat @click="exportBibNumbersPDF" style="margin-top: 40px;">
                                                         <div class="row items-center">
                                                             <q-icon left name="print" />
                                                             <div class="text-center">
@@ -288,9 +306,188 @@
                             </div>
                         </q-tab-panel>
 
-                        <q-tab-panel name="results">
-                            <div class="text-h6">Résultats</div>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                        <q-tab-panel name="ranking">
+                            <div class="row">
+                                <div class="col-2">
+                                    <q-tabs
+                                        v-model="tabRankingRaces"
+                                        vertical
+                                        class="text-primary"
+                                    >
+                                        <q-tab name="0" icon="directions_run" label="Toutes les courses" @click="refreshDataRanking" style="color: black" />
+                                        <q-tab v-for="race in dataRaces" :key="race.raceID" :name="race.raceID" icon="directions_run" :label="race.name" :style="{ color: race.color }" @click="refreshDataRanking" />
+                                    </q-tabs>
+                                </div>
+                                <div class="col-10" style="padding-left: 20px;">
+                                    <div class="row" style="margin-bottom: 20px;">
+                                        <q-btn-toggle
+                                            class="col"
+                                            v-model="tabRankingDisplay"
+                                            toggle-color="primary"
+                                            spread
+                                            :options="[
+                                                {value: 'group', slot: 'group'},
+                                                {value: 'subgroup', slot: 'subgroup'},
+                                                {value: 'runner', slot: 'runner'}
+                                            ]"
+                                        >
+                                            <template v-slot:group class="col">
+                                                <q-icon name="group" />
+                                                <div style='margin-left: 10px'>Groupes</div>
+                                            </template>
+                                            <template v-slot:subgroup class="col">
+                                                <q-icon name="group" />
+                                                <div style='margin-left: 10px'>Sous-Groupes</div>
+                                            </template>
+                                            <template v-slot:runner class="col">
+                                                <q-icon name="person" />
+                                                <div style='margin-left: 10px'>Individuels</div>
+                                            </template>
+                                        </q-btn-toggle>
+                                    </div>
+                                    <q-tab-panels v-model="tabRankingDisplay" animated>
+                                        <q-tab-panel name="group">
+                                            <q-table
+                                                class="tableRunners"
+                                                virtual-scroll
+                                                table-style="max-height: 63vh"
+                                                no-data-label="Il n'y a aucun résultat pour cette course"
+                                                no-results-label="Il n'y a aucun résultat répondant à ces critères de recherche."
+                                                :pagination.sync="paginationRanking"
+                                                :rows-per-page-options="[0]"
+                                                :virtual-scroll-sticky-start="48"
+                                                :filter="filterRankingGroup"
+                                                row-key="rank"
+                                                title="Classement des Sous-Groupes"
+                                                :data="dataRankingGroup"
+                                                :columns="columnsRankingGroup"
+                                            >
+                                                <template v-slot:top>
+                                                    <q-space></q-space>
+                                                    <q-input clearable class="col-6" outlined debounce="300" color="primary" v-model="filterRankingGroup">
+                                                        <template v-slot:prepend>
+                                                            <q-icon name="search" ></q-icon>
+                                                        </template>
+                                                    </q-input>
+                                                </template>
+                                                <template v-slot:body-cell-group="props">
+                                                    <q-td :props="props">
+                                                        <q-btn outline disabled no-caps color="black" :label="props.value">
+                                                            <q-badge :color="props.row.numberColor" floating>{{ props.row.number }}</q-badge>
+                                                        </q-btn>
+                                                    </q-td>
+                                                </template>
+                                                <template v-slot:body-cell-points="props">
+                                                    <q-td :props="props">
+                                                        <div class="row">
+                                                            <q-btn outline disabled no-caps color="black" :label="props.value" style='min-width: 70px; margin-right: 10px;'></q-btn>
+                                                            <q-linear-progress :value="props.row.progressbar" :color="props.row.color" track-color="white" class="col-10" stripe></q-linear-progress>
+                                                        </div>
+                                                    </q-td>
+                                                </template>
+                                            </q-table>
+                                        </q-tab-panel>
+                                        <q-tab-panel name="subgroup">
+                                            <q-table
+                                                class="tableRunners"
+                                                virtual-scroll
+                                                table-style="max-height: 63vh"
+                                                no-data-label="Il n'y a aucun résultat pour cette course"
+                                                no-results-label="Il n'y a aucun résultat répondant à ces critères de recherche."
+                                                :pagination.sync="paginationRanking"
+                                                :rows-per-page-options="[0]"
+                                                :virtual-scroll-sticky-start="48"
+                                                :filter="filterRankingSubgroup"
+                                                row-key="rank"
+                                                title="Classement des Sous-Groupes"
+                                                :data="dataRankingSubgroup"
+                                                :columns="columnsRankingSubgroup"
+                                            >
+                                                <template v-slot:top>
+                                                    <q-space></q-space>
+                                                    <q-input clearable class="col-6" outlined debounce="300" color="primary" v-model="filterRankingSubgroup">
+                                                        <template v-slot:prepend>
+                                                            <q-icon name="search" ></q-icon>
+                                                        </template>
+                                                    </q-input>
+                                                </template>
+                                                <template v-slot:body-cell-subgroup="props">
+                                                    <q-td :props="props">
+                                                        <q-btn-group outline>
+                                                            <q-btn disabled color="black" :label="props.row.group"></q-btn>
+                                                            <q-btn outline disabled no-caps color="black" :label="props.value">
+                                                                <q-badge :color="props.row.numberColor" floating>{{ props.row.number }}</q-badge>
+                                                            </q-btn>
+                                                        </q-btn-group>
+                                                    </q-td>
+                                                </template>
+                                                <template v-slot:body-cell-points="props">
+                                                    <q-td :props="props">
+                                                        <div class="row">
+                                                            <q-btn outline disabled no-caps color="black" :label="props.value" style='min-width: 70px; margin-right: 10px;'></q-btn>
+                                                            <q-linear-progress :value="props.row.progressbar" :color="props.row.color" track-color="white" class="col-10" stripe></q-linear-progress>
+                                                        </div>
+                                                    </q-td>
+                                                </template>
+                                            </q-table>
+                                        </q-tab-panel>
+                                        <q-tab-panel name="runner">
+                                            <q-table
+                                                class="tableRunners"
+                                                virtual-scroll
+                                                table-style="max-height: 63vh"
+                                                no-data-label="Il n'y a aucun résultat pour cette course"
+                                                no-results-label="Il n'y a aucun résultat répondant à ces critères de recherche."
+                                                :pagination.sync="paginationRanking"
+                                                :rows-per-page-options="[0]"
+                                                :virtual-scroll-sticky-start="48"
+                                                :filter="filterRanking"
+                                                row-key="name"
+                                                title="Classement Individuel"
+                                                :data="dataRanking"
+                                                :columns="columnsRanking"
+                                            >
+                                                <template v-slot:top>
+                                                    <q-btn-toggle
+                                                        v-model="modelRanking"
+                                                        @click="refreshDataRanking"
+                                                        :toggle-color="rankingBtnToggleColor"
+                                                        :options="[
+                                                            {value: 'completed', slot: 'completed'},
+                                                            {value: 'dropped', slot: 'dropped'},
+                                                            {value: 'missing', slot: 'missing'}
+                                                        ]"
+                                                    >
+                                                        <template v-slot:completed>
+                                                            <q-icon name="sentiment_very_satisfied" />
+                                                            <div style='margin-left: 10px'>Arrivées</div>
+                                                        </template>
+                                                        <template v-slot:dropped>
+                                                            <q-icon name="sentiment_very_dissatisfied" />
+                                                            <div style='margin-left: 10px'>Abandons</div>
+                                                        </template>
+                                                        <template v-slot:missing>
+                                                            <q-icon name="cancel" />
+                                                            <div style='margin-left: 10px'>Absents</div>
+                                                        </template>
+                                                    </q-btn-toggle>
+                                                    <q-space></q-space>
+                                                    <q-input clearable class="col-6" outlined debounce="300" color="primary" v-model="filterRanking">
+                                                        <template v-slot:prepend>
+                                                            <q-icon name="search" ></q-icon>
+                                                        </template>
+                                                    </q-input>
+                                                </template>
+                                                <template v-slot:body-cell-name="props">
+                                                    <q-td :props="props">
+                                                        <q-btn outline disabled no-caps :color="(props.row.gender === 'M') ? 'blue' : 'pink'" :label="props.value"></q-btn>
+                                                    </q-td>
+                                                </template>
+                                            </q-table>
+                                        </q-tab-panel>
+                                    </q-tab-panels>
+                                </div>
+                            </div>
                         </q-tab-panel>
                     </q-tab-panels>
                 </div>
@@ -598,6 +795,68 @@
                     </q-card-section>
                 </q-card>
             </q-dialog>
+            <q-dialog v-model="dialogSetGender">
+                <q-card>
+                    <q-toolbar>
+                        <q-avatar>
+                            <q-icon name="edit" />
+                        </q-avatar>
+                        <q-toolbar-title>Genre :</q-toolbar-title>
+                    </q-toolbar>
+                    <q-card-section class="q-pt-none">
+                        <q-btn-toggle
+                            v-model="inputGender"
+                            spread
+                            toggle-color="primary"
+                            :options="[
+                                {label: 'Masculin', value: 'M'},
+                                {label: 'Féminin', value: 'F'}
+                            ]"
+                        />
+                    </q-card-section>
+                    <q-card-actions>
+                        <q-space></q-space>
+                        <q-btn v-close-popup flat color="primary" label="Annuler" />
+                        <q-btn color="primary" @click="setGender" icon="edit" label="Attribuer" />
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
+            <q-dialog v-model="dialogSetGroup">
+                <q-card>
+                    <q-toolbar>
+                        <q-avatar>
+                            <q-icon name="edit" />
+                        </q-avatar>
+                        <q-toolbar-title>Groupe :</q-toolbar-title>
+                    </q-toolbar>
+                    <q-card-section class="q-pt-none">
+                        <q-input v-model="inputGroup" outlined autofocus @keyup.enter="setGroup" />
+                    </q-card-section>
+                    <q-card-actions>
+                        <q-space></q-space>
+                        <q-btn v-close-popup flat color="primary" label="Annuler" />
+                        <q-btn color="primary" @click="setGroup" icon="edit" label="Attribuer" />
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
+            <q-dialog v-model="dialogSetSubgroup">
+                <q-card>
+                    <q-toolbar>
+                        <q-avatar>
+                            <q-icon name="edit" />
+                        </q-avatar>
+                        <q-toolbar-title>Sous-Groupe :</q-toolbar-title>
+                    </q-toolbar>
+                    <q-card-section class="q-pt-none">
+                        <q-input v-model="inputSubgroup" outlined autofocus @keyup.enter="setSubgroup" />
+                    </q-card-section>
+                    <q-card-actions>
+                        <q-space></q-space>
+                        <q-btn v-close-popup flat color="primary" label="Annuler" />
+                        <q-btn color="primary" @click="setSubgroup" icon="edit" label="Attribuer" />
+                    </q-card-actions>
+                </q-card>
+            </q-dialog>
             <q-dialog v-model="dialogAssignBibNumbers">
                 <q-card>
                     <q-toolbar>
@@ -698,10 +957,15 @@ export default {
             tab: 'management',
             tabManagement: 'runners',
             tabRaces: '',
+            tabRankingRaces: '0',
+            tabRankingDisplay: 'group',
             bibNumberRedundants: [],
             filterRunners: '',
             filterResults: '',
             filterSelectRunner: '',
+            filterRanking: '',
+            filterRankingSubgroup: '',
+            filterRankingGroup: '',
             left: false,
             lastFileOpened: '',
             lastFileOpenedFilename: '',
@@ -712,6 +976,9 @@ export default {
             inputRunnerGroup: '',
             inputRunnerSubgroup: '',
             inputRunnerBibNumber: '',
+            inputGender: 'M',
+            inputGroup: '',
+            inputSubgroup: '',
             inputBibNumber: '',
             inputRaceID: '',
             inputRaceName: '',
@@ -722,7 +989,11 @@ export default {
             dataRunners: DAO.data.runners,
             dataRaces: DAO.data.races,
             dataResults: [],
+            dataRanking: [],
+            dataRankingSubgroup: [],
+            dataRankingGroup: [],
             modelResults: 'completed',
+            modelRanking: 'completed',
             resultToDelRunnerID: '',
             resultToDelRunnerIndex: '',
             resultToDelRunnerGender: '',
@@ -759,6 +1030,11 @@ export default {
             },
             paginationSelectRunner: {
                 rowsPerPage: 0
+            },
+            paginationRanking: {
+                rowsPerPage: 0,
+                sortBy: 'rank',
+                descending: false
             },
             columnsRunners: [
                 {
@@ -896,6 +1172,65 @@ export default {
                 { name: 'group', align: 'center', label: 'Groupe', field: 'group', sortable: true },
                 { name: 'subgroup', align: 'center', label: 'Sous-Groupe', field: 'subgroup', sortable: true }
             ],
+            columnsRanking: [
+                {
+                    name: 'rank',
+                    align: 'center',
+                    label: 'Classement',
+                    field: 'rank',
+                    sortable: true,
+                    sort: (a, b) => parseInt(a, 10) - parseInt(b, 10)
+                },
+                {
+                    name: 'name',
+                    required: true,
+                    label: 'Dossard / Coureur',
+                    align: 'left',
+                    field: row => row.name,
+                    format: val => `${val}`,
+                    sortable: true
+                },
+                { name: 'group', align: 'center', label: 'Groupe', field: 'group', sortable: true },
+                { name: 'subgroup', align: 'center', label: 'Sous-Groupe', field: 'subgroup', sortable: true }
+            ],
+            columnsRankingSubgroup: [
+                {
+                    name: 'rank',
+                    align: 'center',
+                    label: '#',
+                    field: 'rank',
+                    sortable: true,
+                    sort: (a, b) => parseInt(a, 10) - parseInt(b, 10)
+                },
+                {
+                    name: 'subgroup',
+                    required: true,
+                    label: '(Groupe) Sous-Groupe',
+                    align: 'left',
+                    field: 'subgroup',
+                    sortable: true
+                },
+                { name: 'points', align: 'left', label: 'Points (Somme des classements des coureurs du sous-groupe)', field: 'points', sortable: true }
+            ],
+            columnsRankingGroup: [
+                {
+                    name: 'rank',
+                    align: 'center',
+                    label: '#',
+                    field: 'rank',
+                    sortable: true,
+                    sort: (a, b) => parseInt(a, 10) - parseInt(b, 10)
+                },
+                {
+                    name: 'group',
+                    required: true,
+                    label: 'Groupe',
+                    align: 'left',
+                    field: 'group',
+                    sortable: true
+                },
+                { name: 'points', align: 'left', label: 'Points (Somme des classements des coureurs du groupe)', field: 'points', sortable: true }
+            ],
             selectColIdentification: [],
             dialogRunnerSave: false,
             dialogRaceSave: false,
@@ -903,6 +1238,9 @@ export default {
             dialogRaceDel: false,
             dialogSelectedRunnersDel: false,
             dialogImportCSV: false,
+            dialogSetGender: false,
+            dialogSetGroup: false,
+            dialogSetSubgroup: false,
             dialogAssignBibNumbers: false,
             dialogSelectRunner: false,
             dialogResultDel: false,
@@ -920,6 +1258,17 @@ export default {
             let color = 'positive';
             if (this.modelResults === 'dropped') { color = 'red' }
             if (this.modelResults === 'missing') { color = 'primary' }
+            return color
+        },
+        /***************************************************************************************************************
+        *  Function : rankingBtnToggleColor
+        *
+        *  Retourne la couleur du btn-toggle de l'onglet "Classements" selon le filtre Arrivées / Abandons / Absents
+        */
+        rankingBtnToggleColor () {
+            let color = 'positive';
+            if (this.modelRanking === 'dropped') { color = 'red' }
+            if (this.modelRanking === 'missing') { color = 'primary' }
             return color
         }
     },
@@ -1119,6 +1468,18 @@ export default {
             setTimeout(this.loadDataResults, 200);
         },
         /***************************************************************************************************************
+        *  Function : refreshDataRanking
+        *
+        *  Rafraichit les données du tableau dataResults sur un clic de l'onglet d'une course
+        *
+        *  Parameters :
+        *    (Event) evt - Evenènement du clic sur l'onglet de la course dans l'onglet des classements
+        */
+        refreshDataRanking (evt) {
+            // On lance une MAJ un peu plus tard (car sinon l'onglet n'est pas encore sélectionné : tabRankingRaces)
+            setTimeout(this.loadDataRanking, 200);
+        },
+        /***************************************************************************************************************
         *  Function : loadDataResults
         *
         *  Charge les résultats dans le tableau de l'onglet "Saisie des résultats"
@@ -1157,6 +1518,48 @@ export default {
                     bibNumber: DAO.data.runners[i].bibNumber,
                     gender: DAO.data.runners[i].gender
                 });
+            }
+        },
+        /***************************************************************************************************************
+        *  Function : loadDataRanking
+        *
+        *  Charge les classements dans les tableaux de l'onglet "Classements"
+        */
+        loadDataRanking () {
+            // Onglet Indivuel
+            this.dataRanking = [];
+            // Si on affiche une course, on fait comme dataResults, sinon, le tableau reste vide pour le classement général
+            if (this.tabRankingRaces !== '0') {
+                // Récupère les résultats d'une course (raceID) et d'un tableau (completed/dropped/missing)
+                const dataRankingByIndex = DAO.racesGetDataResults(this.tabRankingRaces, this.modelRanking);
+                const iMax = dataRankingByIndex.length;
+                for (var i = 0; i < iMax; i++) {
+                    const rank = dataRankingByIndex[i].rank;
+                    const runnerIndex = dataRankingByIndex[i].runnerIndex;
+                    this.dataRanking.push({
+                        rank: rank,
+                        runnerID: DAO.data.runners[runnerIndex].runnerID,
+                        name: DAO.data.runners[runnerIndex].name,
+                        gender: DAO.data.runners[runnerIndex].gender,
+                        group: DAO.data.runners[runnerIndex].group,
+                        subgroup: DAO.data.runners[runnerIndex].subgroup,
+                        bibNumber: DAO.data.runners[runnerIndex].bibNumber
+                    });
+                }
+            }
+            // Onglet Sous-Groupes
+            this.dataRankingSubgroup = [];
+            // Si on affiche une course
+            if (this.tabRankingRaces !== '0') {
+                this.dataRankingSubgroup = DAO.rankingGetSubgroups(this.tabRankingRaces);
+            // Sinon, on fait le bilan toutes courses confondues
+            } else {
+                this.dataRankingSubgroup = DAO.rankingGetSubgroupsAllRaces();
+            }
+            // Onglet Groupes
+            this.dataRankingGroup = [];
+            if (this.tabRankingRaces !== '0') {
+                this.dataRankingGroup = DAO.rankingGetGroups(this.tabRankingRaces);
             }
         },
         /***************************************************************************************************************
@@ -1632,6 +2035,102 @@ export default {
                 DAO.save();
                 this.dialogImportCSV = false;
             }
+        },
+        /***************************************************************************************************************
+        *  Function : showSetGender
+        *
+        *  Ouverture de la fenêtre de dialogue pour attribuer un Genre (M/F) à plusieurs coureurs en même temps
+        */
+        showSetGender () {
+            this.inputGender = 'M';
+            this.dialogSetGender = true;
+        },
+        /***************************************************************************************************************
+        *  Function : setGender
+        *
+        *  Attribue un nouveau genre (M/F) rentré par l'utilisateur aux coureurs sélectionnés
+        */
+        setGender () {
+            this.dialogSetGender = false;
+            this.cardRunnersActions = false;
+            const gender = this.inputGender;
+            const iMax = this.selectedRunners.length;
+            for (var i = 0; i < iMax; i++) {
+                DAO.runnersEdit(this.selectedRunners[i].runnerID, this.selectedRunners[i].name, gender, this.selectedRunners[i].group, this.selectedRunners[i].subgroup, this.selectedRunners[i].bibNumber);
+            }
+            // On enregistre le fichier
+            DAO.save();
+            // On rafraichit l'interface
+            this.selectedRunners = [];
+            // BUGFIX : Pour rafraichir l'interface sur une édition... obligé de filtrer n'importe quoi...
+            this.filterRunners = 'Chargement...';
+            this.filterResults = 'Chargement...';
+            // Puis de rafraichir en laissant quelques millisecondes...
+            setTimeout(this.refreshData, 200);
+        },
+        /***************************************************************************************************************
+        *  Function : showSetGroup
+        *
+        *  Ouverture de la fenêtre de dialogue pour attribuer un Genre (M/F) à plusieurs coureurs en même temps
+        */
+        showSetGroup () {
+            this.inputGroup = '';
+            this.dialogSetGroup = true;
+        },
+        /***************************************************************************************************************
+        *  Function : setGroup
+        *
+        *  Attribue un nouveau Groupe rentré par l'utilisateur aux coureurs sélectionnés
+        */
+        setGroup () {
+            this.dialogSetGroup = false;
+            this.cardRunnersActions = false;
+            const group = this.inputGroup;
+            const iMax = this.selectedRunners.length;
+            for (var i = 0; i < iMax; i++) {
+                DAO.runnersEdit(this.selectedRunners[i].runnerID, this.selectedRunners[i].name, this.selectedRunners[i].gender, group, this.selectedRunners[i].subgroup, this.selectedRunners[i].bibNumber);
+            }
+            // On enregistre le fichier
+            DAO.save();
+            // On rafraichit l'interface
+            this.selectedRunners = [];
+            // BUGFIX : Pour rafraichir l'interface sur une édition... obligé de filtrer n'importe quoi...
+            this.filterRunners = 'Chargement...';
+            this.filterResults = 'Chargement...';
+            // Puis de rafraichir en laissant quelques millisecondes...
+            setTimeout(this.refreshData, 200);
+        },
+        /***************************************************************************************************************
+        *  Function : showSetSubgroup
+        *
+        *  Ouverture de la fenêtre de dialogue pour attribuer un Genre (M/F) à plusieurs coureurs en même temps
+        */
+        showSetSubgroup () {
+            this.inputSubgroup = '';
+            this.dialogSetSubgroup = true;
+        },
+        /***************************************************************************************************************
+        *  Function : setSubgroup
+        *
+        *  Attribue un nouveau Sous-Groupe rentré par l'utilisateur aux coureurs sélectionnés
+        */
+        setSubgroup () {
+            this.dialogSetSubgroup = false;
+            this.cardRunnersActions = false;
+            const subgroup = this.inputSubgroup;
+            const iMax = this.selectedRunners.length;
+            for (var i = 0; i < iMax; i++) {
+                DAO.runnersEdit(this.selectedRunners[i].runnerID, this.selectedRunners[i].name, this.selectedRunners[i].gender, this.selectedRunners[i].group, subgroup, this.selectedRunners[i].bibNumber);
+            }
+            // On enregistre le fichier
+            DAO.save();
+            // On rafraichit l'interface
+            this.selectedRunners = [];
+            // BUGFIX : Pour rafraichir l'interface sur une édition... obligé de filtrer n'importe quoi...
+            this.filterRunners = 'Chargement...';
+            this.filterResults = 'Chargement...';
+            // Puis de rafraichir en laissant quelques millisecondes...
+            setTimeout(this.refreshData, 200);
         },
         /***************************************************************************************************************
         *  Function : showAssignBibNumbers
