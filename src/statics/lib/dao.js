@@ -774,26 +774,148 @@ const DAO = {
         return subgroups
     },
     /***************************************************************************************************************
+    *  Function : rankingGetGroupsAllRaces
+    *
+    *  Retourne le tableau des groupes ({rank, group, points, number, numberColor, progressbar, color}) toutes courses confondues
+    */
+    rankingGetGroupsAllRaces: function () {
+        const groups = [];
+        let nbMaxRunnersByGroup = 0;
+        const iMax = this.data.races.length;
+        for (var i = 0; i < iMax; i++) {
+            nbMaxRunnersByGroup = nbMaxRunnersByGroup + parseInt(this.data.races[i].nbRunnersByGroup, 10);
+            // Pour chaque course, on récupère les groupes
+            const raceGroups = this.rankingGetGroups(DAO.data.races[i].raceID);
+            const jMax = raceGroups.length;
+            for (var j = 0; j < jMax; j++) {
+                let raceGroupIndex = 0;
+                const raceGroupGroup = raceGroups[j].group;
+                let raceGroupPoints = raceGroups[j].points;
+                let raceGroupNumber = raceGroups[j].number;
+                // Pour chaque groupe, on regarde s'il est déjà dans notre liste de groupes
+                let raceGroupExist = false;
+                var kMax = groups.length;
+                for (var k = 0; k < kMax; k++) {
+                    // Si le groupe existe déjà dans notre liste
+                    if (groups[k].group === raceGroupGroup) {
+                        // Il existe, donc on calcule ses nouveaux points et number
+                        raceGroupExist = true;
+                        raceGroupIndex = k;
+                        // Pas de tests (ils ont déjà été fait lors des calculs de points de chaque groupe), on ne fait qu'additionner
+                        raceGroupPoints = groups[k].points + raceGroupPoints;
+                        raceGroupNumber = groups[k].number + raceGroupNumber;
+                    }
+                }
+                // Si le groupe n'est pas encore dans notre liste, on l'ajoute
+                if (!raceGroupExist) {
+                    groups.push({ group: raceGroupGroup, points: raceGroupPoints, number: raceGroupNumber });
+                // Sinon, on met à jour au bon endroit
+                } else {
+                    groups[raceGroupIndex] = {
+                        group: raceGroupGroup,
+                        points: raceGroupPoints,
+                        number: raceGroupNumber
+                    };
+                }
+            }
+        }
+        // On range les groupes par ordre croissant de points
+        groups.sort(this.rankingCompare);
+        // On ajoute maintenant le rank, la progressbar et sa couleur... pour chaque sous-groupe
+        var lMax = groups.length;
+        const maxPoints = groups[lMax - 1].points;
+        for (var l = 0; l < lMax; l++) {
+            const group = groups[l].group;
+            const points = groups[l].points;
+            const number = groups[l].number;
+            const numberColor = (number === nbMaxRunnersByGroup) ? 'green' : 'red';
+            const progressbar = groups[l].points / maxPoints;
+            const color = this.rankingGetColor(l + 1);
+            groups[l] = {
+                rank: l + 1,
+                group: group,
+                points: points,
+                number: number,
+                numberColor: numberColor,
+                progressbar: progressbar,
+                color: color
+            };
+        }
+        return groups
+    },
+    /***************************************************************************************************************
     *  Function : rankingGetSubgroupsAllRaces
     *
     *  Retourne le tableau des sous-groupes ({rank, subgroup, group, points, number, numberColor, progressbar, color}) toutes courses confondues
     */
     rankingGetSubgroupsAllRaces: function () {
-        /* const subgroups = [];
-        let subgroupTotalPoints = 0;
+        const subgroups = [];
+        let nbMaxRunnersBySubgroup = 0;
         const iMax = this.data.races.length;
         for (var i = 0; i < iMax; i++) {
+            nbMaxRunnersBySubgroup = nbMaxRunnersBySubgroup + parseInt(this.data.races[i].nbRunnersBySubgroup, 10);
             // Pour chaque course, on récupère les sous-groupes
-            const subgroups = this.rankingGetSubgroups(DAO.data.races[i].raceID);
-            subgroupTotalPoints = subgroups.points;
-            const jMax = this.data.races.length;
+            const raceSubgroups = this.rankingGetSubgroups(DAO.data.races[i].raceID);
+            const jMax = raceSubgroups.length;
             for (var j = 0; j < jMax; j++) {
-                // Pour chaque course, on récupère les sous-groupes et on accumule leurs points
-                const subgroups = this.rankingGetSubgroups(DAO.data.races[j].raceID);
-                subgroupTotalPoints = subgroups.points;
+                let raceSubgroupIndex = 0;
+                const raceSubgroupGroup = raceSubgroups[j].group;
+                const raceSubgroupSubgroup = raceSubgroups[j].subgroup;
+                let raceSubgroupPoints = raceSubgroups[j].points;
+                let raceSubgroupNumber = raceSubgroups[j].number;
+                // Pour chaque sous-groupe, on regarde s'il est déjà dans notre liste de groupes
+                let raceSubgroupExist = false;
+                var kMax = subgroups.length;
+                for (var k = 0; k < kMax; k++) {
+                    // Pour éviter 1 même sous-groupe pour 2 car ils porteraient le même nom, on vérifie leur groupe d'appartenance
+                    if ((subgroups[k].subgroup === raceSubgroupSubgroup) && (subgroups[k].group === raceSubgroupGroup)) {
+                        // Il existe, donc on calcule ses nouveaux points et number
+                        raceSubgroupExist = true;
+                        raceSubgroupIndex = k;
+                        // Pas de tests (ils ont déjà été fait lors des calculs de points de chaque sous-groupe), on ne fait qu'additionner
+                        raceSubgroupPoints = subgroups[k].points + raceSubgroupPoints;
+                        raceSubgroupNumber = subgroups[k].number + raceSubgroupNumber;
+                    }
+                }
+                // Si le sous-groupe n'est pas encore dans notre liste, on l'ajoute
+                if (!raceSubgroupExist) {
+                    subgroups.push({ subgroup: raceSubgroupSubgroup, group: raceSubgroupGroup, points: raceSubgroupPoints, number: raceSubgroupNumber });
+                // Sinon, on met à jour au bon endroit
+                } else {
+                    subgroups[raceSubgroupIndex] = {
+                        subgroup: raceSubgroupSubgroup,
+                        group: raceSubgroupGroup,
+                        points: raceSubgroupPoints,
+                        number: raceSubgroupNumber
+                    };
+                }
             }
         }
-        return subgroups */
+        // On range les sous-groupes par ordre croissant de points
+        subgroups.sort(this.rankingCompare);
+        // On ajoute maintenant le rank, la progressbar et sa couleur... pour chaque sous-groupe
+        var lMax = subgroups.length;
+        const maxPoints = subgroups[lMax - 1].points;
+        for (var l = 0; l < lMax; l++) {
+            const group = subgroups[l].group;
+            const subgroup = subgroups[l].subgroup;
+            const points = subgroups[l].points;
+            const number = subgroups[l].number;
+            const numberColor = (number === nbMaxRunnersBySubgroup) ? 'green' : 'red';
+            const progressbar = subgroups[l].points / maxPoints;
+            const color = this.rankingGetColor(l + 1);
+            subgroups[l] = {
+                rank: l + 1,
+                subgroup: subgroup,
+                group: group,
+                points: points,
+                number: number,
+                numberColor: numberColor,
+                progressbar: progressbar,
+                color: color
+            };
+        }
+        return subgroups
     }
 };
 

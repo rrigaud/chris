@@ -1558,8 +1558,12 @@ export default {
             }
             // Onglet Groupes
             this.dataRankingGroup = [];
+            // Si on affiche une course
             if (this.tabRankingRaces !== '0') {
                 this.dataRankingGroup = DAO.rankingGetGroups(this.tabRankingRaces);
+            // Sinon, on fait le bilan toutes courses confondues
+            } else {
+                this.dataRankingGroup = DAO.rankingGetGroupsAllRaces();
             }
         },
         /***************************************************************************************************************
