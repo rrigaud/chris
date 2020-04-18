@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body {
+                font-family: "Open Sans", sans-serif;
+                line-height: 1.25;
+            }
+
+            .titleBar {
+                font-size: 40px;
+                font-weight: bold;
+                display: flex;
+                justify-content: center;
+                border-bottom: 1px solid black;
+                padding-bottom: 10px;
+            }
+
+            caption {
+                font-size: 1em;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+            }
+
+            table {
+                border-collapse: collapse;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            table caption {
+                font-size: 1.5em;
+                margin: .5em 0 .75em;
+            }
+
+            table tr {
+                border: 1px solid #ddd;
+                padding: .35em;
+            }
+
+            table th,
+            table td {
+                padding: .325em;
+                text-align: left;
+                font-size: 12px;
+            }
+
+            table .colRank,
+            table .colPoints{
+                text-align: right;
+            }
+
+            table th {
+                font-size: 10px;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+                background-color: #f8f8f8;
+            }
+            .colRank {
+                width: 40px;
+            }
+            .colGroup {
+                width: 300px;
+            }
+            .colPoints {
+                width: 50px;
+            }
+            .bottomBar {
+                margin-top: 60px;
+                display: flex;
+                justify-content: center;
+                page-break-after: always;
+            }
+            .green {
+                color: green;
+            }
+            .red {
+                color: red;
+            }
+            .progressWrap {
+                height: 24px;
+                background: transparent;
+                border-radius: 2px;
+            }
+            .progressBar {
+                height: 24px;
+                width: 40%;
+                border-radius: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="target">Création des tableaux de résultats...</div>
+        <script id="template" type="x-tmpl-mustache">
+            <div class="titleBar">
+                <div class="raceTitle">TOUTES COURSES CONFONDUES</div>
+            </div>
+            <table style="margin-top: 40px;">
+                <caption>Résultats par <b>groupe</b></caption>
+                <thead>
+                    <tr>
+                        <th class="colRank">#</th>
+                        <th class="colGroup">Groupe (nb. coureurs comptabilisés)</th>
+                        <th class="colPoints">Points</th>
+                        <th class="colProgressbar">(somme des classements des coureurs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#allRacesGroups}}
+                    <tr>
+                        <td class="colRank">{{ rank }}.</td>
+                        <td class="colGroup">{{ group }}<span class="{{ numberColor }}" style="margin-left: 10px;">({{ number }} coureurs)</span></td>
+                        <td class="colPoints">{{ points }}</td>
+                        <td class="colProgressbar">
+                            <div class="progressWrap">
+                                <div class="progressBar" style="width: {{ getPercentage }}%; background: {{ getColor }};"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/allRacesGroups}}
+                </tbody>
+            </table>
+            <table style="margin-top: 40px;">
+                <caption>Résultats par <b>sous-groupe</b></caption>
+                <thead>
+                    <tr>
+                        <th class="colRank">#</th>
+                        <th class="colGroup">Groupe (nb. coureurs comptabilisés)</th>
+                        <th class="colPoints">Points</th>
+                        <th class="colProgressbar">(somme des classements des coureurs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#allRacesSubgroups}}
+                    <tr>
+                        <td class="colRank">{{ rank }}.</td>
+                        <td class="colGroup">{{ subgroup }} <i>({{ group }})</i><span class="{{ numberColor }}" style="margin-left: 10px;">({{ number }} coureurs)</span></td>
+                        <td class="colPoints">{{ points }}</td>
+                        <td class="colProgressbar">
+                            <div class="progressWrap">
+                                <div class="progressBar" style="width: {{ getPercentage }}%; background: {{ getColor }};"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/allRacesSubgroups}}
+                </tbody>
+            </table>
+            <div class="bottomBar">
+                <div>***</div>
+            </div>
+        </script>
+        <script src="lib/mustache.min.js"></script>
+        <script src="lib/ranking.js"></script>
+    </body>
+</html>

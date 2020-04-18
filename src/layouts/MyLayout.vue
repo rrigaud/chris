@@ -161,7 +161,7 @@
                                                         <q-btn color="positive" label="Coureur" icon="person_add" @click="showAddRunner" />
                                                         <q-btn color="positive" label="Importer CSV" icon="group_add" @click="showImportCSV" />
                                                     </q-btn-group>
-                                                    <q-space ></q-space>
+                                                    <q-space></q-space>
                                                     <q-input clearable class="col-6" outlined debounce="300" color="primary" v-model="filterRunners">
                                                         <template v-slot:prepend>
                                                             <q-icon name="search" ></q-icon>
@@ -316,6 +316,32 @@
                                     >
                                         <q-tab name="0" icon="directions_run" label="Toutes les courses" @click="refreshDataRanking" style="color: black" />
                                         <q-tab v-for="race in dataRaces" :key="race.raceID" :name="race.raceID" icon="directions_run" :label="race.name" :style="{ color: race.color }" @click="refreshDataRanking" />
+                                        <div class="q-pa-md row items-start q-gutter-md">
+                                            <q-card style="margin-top: 120px;">
+                                                <q-card-section class="bg-primary text-white">
+                                                    Exporter les résultats vers...
+                                                </q-card-section>
+                                                <q-separator />
+                                                <q-card-actions vertical>
+                                                    <q-btn flat @click="exportRankingPDF">
+                                                        <div class="row items-center">
+                                                            <q-icon left name="print" />
+                                                            <div class="text-center">
+                                                                Un fichier PDF
+                                                            </div>
+                                                        </div>
+                                                    </q-btn>
+                                                    <q-btn flat @click="exportRankingCSV">
+                                                        <div class="row items-center">
+                                                            <q-icon left name="view_week" />
+                                                            <div class="text-center">
+                                                                Un fichier CSV
+                                                            </div>
+                                                        </div>
+                                                    </q-btn>
+                                                </q-card-actions>
+                                            </q-card>
+                                        </div>
                                     </q-tabs>
                                 </div>
                                 <div class="col-10" style="padding-left: 20px;">
@@ -992,6 +1018,7 @@ export default {
             dataRanking: [],
             dataRankingSubgroup: [],
             dataRankingGroup: [],
+            dataRankingExport: {},
             modelResults: 'completed',
             modelRanking: 'completed',
             resultToDelRunnerID: '',
@@ -2418,6 +2445,114 @@ export default {
             DAO.racesMoveResultUp(this.tabRaces.toString(), runnerID, this.modelResults, rank);
             // On rafraichit l'interface
             this.refreshDataRaces();
+        },
+        /***************************************************************************************************************
+        *  Function : exportRankingPDF
+        *
+        *  Génère et exporte un PDF des résultats / classements à partir d'un template (dans une fenêtre cachée)
+        */
+        exportRankingPDF () {
+            // On doit commencer par formatter toutes les données pour les envoyer proprement à la fenêtre de génération de PDF
+            this.dataRankingExport = {};
+            this.dataRankingExport.allRacesGroups = DAO.rankingGetGroupsAllRaces();
+            this.dataRankingExport.allRacesSubgroups = DAO.rankingGetSubgroupsAllRaces();
+            // Ouverture de la fenêtre pour générer les dossards au format HTML (mais cachée)
+            const winRanking = new BrowserWindow({ show: true, webPreferences: { nodeIntegration: true, devTools: false } });
+            // Chargement du template pour les Dossards
+            const templateRanking = require('url').format({
+                protocol: 'file',
+                slashes: true,
+                pathname: path.join(__statics, 'ranking.html')
+            })
+            winRanking.loadURL(templateRanking);
+
+            // Réception d'un message : Chargement terminé
+            winRanking.webContents.on('did-finish-load', () => {
+                // Envoi des données vers la fenêtre de template des résultats / classements
+                winRanking.webContents.send('datatransfer', this.dataRankingExport);
+            })
+
+            // Réception d'un message : Dossards générés (avec Mustache dans la fenêtre cible)
+            winRanking.webContents.on('ipc-message', (event, channel, arg) => {
+                // Si on a bien reçu le bon message
+                if (channel === 'rankingGenerated') {
+                    // On sélectionne l'emplacement du fichier PDF à créer
+                    dialog.showSaveDialog({
+                        title: 'Exporter les résultats au format PDF',
+                        buttonLabel: 'Enregistrer',
+                        filters: [{ name: 'PDF', extensions: ['pdf'] }, { name: 'Tous les fichiers', extensions: ['*'] }]
+                    }).then(result => {
+                        if (result.filePath && result.filePath.length > 0) {
+                            const pdfFile = result.filePath;
+                            // Transformation HTML > PDF
+                            winRanking.webContents.printToPDF({ landscape: false, printBackground: true }).then(data => {
+                                fs.writeFile(pdfFile, data, err => {
+                                    if (err) return console.log(err.message);
+                                    this.$q.notify({
+                                        message: `PDF exporté : ${pdfFile}`,
+                                        timeout: 5000,
+                                        color: 'positive',
+                                        icon: 'print',
+                                        position: 'bottom'
+                                    });
+                                    // Fermeture de la fenêtre
+                                    winRanking.close();
+                                    // Ouverture du PDF
+                                    shell.openItem(pdfFile);
+                                })
+                            }).catch(error => {
+                                console.log(error)
+                            })
+                        }
+                    }).catch(err => {
+                        console.log(err)
+                    })
+                }
+            })
+        },
+        /***************************************************************************************************************
+        *  Function : exportRankingCSV
+        *
+        *  Génère et exporte un CSV des résultats / classements
+        */
+        exportRankingCSV () {
+            // On sélectionne l'emplacement du fichier CSV à créer
+            dialog.showSaveDialog({
+                title: 'Exporter les dossards au format CSV',
+                buttonLabel: 'Enregistrer',
+                filters: [{ name: 'CSV', extensions: ['csv'] }, { name: 'Tous les fichiers', extensions: ['*'] }]
+            }).then(result => {
+                if (result.filePath && result.filePath.length > 0) {
+                    const csvFile = result.filePath;
+                    const csvRows = [];
+                    const iMax = this.selectedRunners.length;
+                    for (var i = 0; i < iMax; i++) {
+                        csvRows.push([this.selectedRunners[i].name, this.selectedRunners[i].gender, this.selectedRunners[i].group, this.selectedRunners[i].subgroup, this.selectedRunners[i].bibNumber]);
+                    }
+                    // Utilisation de fast-csv
+                    csv.writeToPath(csvFile, csvRows)
+                        .on('error', err => console.error(err))
+                        .on('finish', () => {
+                            this.$q.notify({
+                                message: `CSV exporté : ${csvFile}`,
+                                timeout: 5000,
+                                color: 'positive',
+                                icon: 'view_week',
+                                position: 'bottom'
+                            });
+                            // On cache les actions pour les coureurs sélectionnés
+                            this.cardRunnersActions = false;
+                            // On rafraichit l'interface
+                            this.selectedRunners = [];
+                            // BUGFIX : Pour rafraichir l'interface sur une édition... obligé de filtrer n'importe quoi...
+                            this.filterRunners = 'Chargement...';
+                            // Puis de rafraichir en laissant quelques millisecondes...
+                            setTimeout(this.refreshData, 200);
+                        });
+                }
+            }).catch(err => {
+                console.log(err)
+            })
         }
     },
     created () {
