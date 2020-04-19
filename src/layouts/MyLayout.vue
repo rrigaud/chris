@@ -2456,8 +2456,64 @@ export default {
             this.dataRankingExport = {};
             this.dataRankingExport.allRacesGroups = DAO.rankingGetGroupsAllRaces();
             this.dataRankingExport.allRacesSubgroups = DAO.rankingGetSubgroupsAllRaces();
+            this.dataRankingExport.races = [];
+            const iMax = DAO.data.races.length;
+            for (var i = 0; i < iMax; i++) {
+                // Récupère les résultats individuels d'une course (raceID) et d'un tableau (completed/dropped/missing)
+                const runnersCompleted = [];
+                let dataRankingByIndex = DAO.racesGetDataResults(DAO.data.races[i].raceID, 'completed');
+                const jMax = dataRankingByIndex.length;
+                for (var j = 0; j < jMax; j++) {
+                    const rank = dataRankingByIndex[j].rank;
+                    const runnerIndex = dataRankingByIndex[j].runnerIndex;
+                    runnersCompleted.push({
+                        rank: rank,
+                        runnerID: DAO.data.runners[runnerIndex].runnerID,
+                        name: DAO.data.runners[runnerIndex].name,
+                        gender: DAO.data.runners[runnerIndex].gender,
+                        group: DAO.data.runners[runnerIndex].group,
+                        subgroup: DAO.data.runners[runnerIndex].subgroup,
+                        bibNumber: DAO.data.runners[runnerIndex].bibNumber
+                    });
+                }
+                const runnersDropped = [];
+                dataRankingByIndex = DAO.racesGetDataResults(DAO.data.races[i].raceID, 'dropped');
+                const kMax = dataRankingByIndex.length;
+                for (var k = 0; k < kMax; k++) {
+                    const rank = dataRankingByIndex[k].rank;
+                    const runnerIndex = dataRankingByIndex[k].runnerIndex;
+                    runnersDropped.push({
+                        rank: rank,
+                        runnerID: DAO.data.runners[runnerIndex].runnerID,
+                        name: DAO.data.runners[runnerIndex].name,
+                        gender: DAO.data.runners[runnerIndex].gender,
+                        group: DAO.data.runners[runnerIndex].group,
+                        subgroup: DAO.data.runners[runnerIndex].subgroup,
+                        bibNumber: DAO.data.runners[runnerIndex].bibNumber
+                    });
+                }
+                const runnersMissing = [];
+                dataRankingByIndex = DAO.racesGetDataResults(DAO.data.races[i].raceID, 'missing');
+                const lMax = dataRankingByIndex.length;
+                for (var l = 0; l < lMax; l++) {
+                    const rank = dataRankingByIndex[l].rank;
+                    const runnerIndex = dataRankingByIndex[l].runnerIndex;
+                    runnersMissing.push({
+                        rank: rank,
+                        runnerID: DAO.data.runners[runnerIndex].runnerID,
+                        name: DAO.data.runners[runnerIndex].name,
+                        gender: DAO.data.runners[runnerIndex].gender,
+                        group: DAO.data.runners[runnerIndex].group,
+                        subgroup: DAO.data.runners[runnerIndex].subgroup,
+                        bibNumber: DAO.data.runners[runnerIndex].bibNumber
+                    });
+                }
+                // On ajoute les résultats de cette course aux exports
+                const race = { name: DAO.data.races[i].name, groups: DAO.rankingGetGroups(DAO.data.races[i].raceID), subgroups: DAO.rankingGetSubgroups(DAO.data.races[i].raceID), runnersCompleted: runnersCompleted, runnersDropped: runnersDropped, runnersMissing: runnersMissing };
+                this.dataRankingExport.races.push(race);
+            }
             // Ouverture de la fenêtre pour générer les dossards au format HTML (mais cachée)
-            const winRanking = new BrowserWindow({ show: true, webPreferences: { nodeIntegration: true, devTools: false } });
+            const winRanking = new BrowserWindow({ show: false, webPreferences: { nodeIntegration: true, devTools: false } });
             // Chargement du template pour les Dossards
             const templateRanking = require('url').format({
                 protocol: 'file',

@@ -5,6 +5,7 @@ ipcRenderer.on('datatransfer', (event, data) => {
     var template = document.getElementById('template').innerHTML;
     var rendered = Mustache.render(template, { allRacesGroups: data.allRacesGroups,
         allRacesSubgroups: data.allRacesSubgroups,
+        races: data.races,
         getPercentage: function () {
             return this.progressbar * 100;
         },

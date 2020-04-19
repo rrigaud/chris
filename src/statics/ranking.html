@@ -68,7 +68,9 @@
                 width: 50px;
             }
             .bottomBar {
-                margin-top: 60px;
+                margin-top: 20px;
+                border-top: 1px solid black;
+                font-size: 10px;
                 display: flex;
                 justify-content: center;
                 page-break-after: always;
@@ -148,8 +150,141 @@
                 </tbody>
             </table>
             <div class="bottomBar">
-                <div>***</div>
+                <div>*** FIN : TOUTES COURSES CONFONDUES ***</div>
             </div>
+            {{#races}}
+            <div class="titleBar">
+                <div class="raceTitle">{{ name }}</div>
+            </div>
+            <table style="margin-top: 40px;">
+                <caption>Résultats par <b>groupe</b></caption>
+                <thead>
+                    <tr>
+                        <th class="colRank">#</th>
+                        <th class="colGroup">Groupe (nb. coureurs comptabilisés)</th>
+                        <th class="colPoints">Points</th>
+                        <th class="colProgressbar">(somme des classements des coureurs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#groups}}
+                    <tr>
+                        <td class="colRank">{{ rank }}.</td>
+                        <td class="colGroup">{{ group }}<span class="{{ numberColor }}" style="margin-left: 10px;">({{ number }} coureurs)</span></td>
+                        <td class="colPoints">{{ points }}</td>
+                        <td class="colProgressbar">
+                            <div class="progressWrap">
+                                <div class="progressBar" style="width: {{ getPercentage }}%; background: {{ getColor }};"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/groups}}
+                </tbody>
+            </table>
+            <table style="margin-top: 40px;">
+                <caption>Résultats par <b>sous-groupe</b></caption>
+                <thead>
+                    <tr>
+                        <th class="colRank">#</th>
+                        <th class="colGroup">Groupe (nb. coureurs comptabilisés)</th>
+                        <th class="colPoints">Points</th>
+                        <th class="colProgressbar">(somme des classements des coureurs)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#subgroups}}
+                    <tr>
+                        <td class="colRank">{{ rank }}.</td>
+                        <td class="colGroup">{{ subgroup }} <i>({{ group }})</i><span class="{{ numberColor }}" style="margin-left: 10px;">({{ number }} coureurs)</span></td>
+                        <td class="colPoints">{{ points }}</td>
+                        <td class="colProgressbar">
+                            <div class="progressWrap">
+                                <div class="progressBar" style="width: {{ getPercentage }}%; background: {{ getColor }};"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/subgroups}}
+                </tbody>
+            </table>
+            <div class="bottomBar">
+                <div>*** FIN : {{ name }} (Classement par groupe/sous-groupe)***</div>
+            </div>
+            <div class="titleBar">
+                <div class="raceTitle">{{ name }}</div>
+            </div>
+            <table style="margin-top: 40px;">
+                <caption>Résultats <b>individuels : Classement Final</b></caption>
+                <thead>
+                    <tr>
+                        <th class="colRank">#</th>
+                        <th>Coureur</th>
+                        <th>Groupe</th>
+                        <th>Sous-groupe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#runnersCompleted}}
+                    <tr>
+                        <td class="colRank">{{ rank }}.</td>
+                        <td>{{ name }}</td>
+                        <td>{{ group }}</td>
+                        <td>{{ subgroup }}</td>
+                    </tr>
+                    {{/runnersCompleted}}
+                </tbody>
+            </table>
+            <div class="bottomBar">
+                <div>*** FIN : {{ name }} (Classement individuel)***</div>
+            </div>
+            <div class="titleBar">
+                <div class="raceTitle">{{ name }}</div>
+            </div>
+            <table style="margin-top: 40px;">
+                <caption>Résultats <b>individuels : Abandons</b></caption>
+                <thead>
+                    <tr>
+                        <th class="colRank">#</th>
+                        <th>Coureur</th>
+                        <th>Groupe</th>
+                        <th>Sous-groupe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#runnersDropped}}
+                    <tr>
+                        <td class="colRank">{{ rank }}.</td>
+                        <td>{{ name }}</td>
+                        <td>{{ group }}</td>
+                        <td>{{ subgroup }}</td>
+                    </tr>
+                    {{/runnersDropped}}
+                </tbody>
+            </table>
+            <table style="margin-top: 40px;">
+                <caption>Résultats <b>individuels : Absents</b></caption>
+                <thead>
+                    <tr>
+                        <th class="colRank">#</th>
+                        <th>Coureur</th>
+                        <th>Groupe</th>
+                        <th>Sous-groupe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#runnersMissing}}
+                    <tr>
+                        <td class="colRank">{{ rank }}.</td>
+                        <td>{{ name }}</td>
+                        <td>{{ group }}</td>
+                        <td>{{ subgroup }}</td>
+                    </tr>
+                    {{/runnersMissing}}
+                </tbody>
+            </table>
+            <div class="bottomBar">
+                <div>*** FIN : {{ name }} (Abandons/absents)***</div>
+            </div>
+            {{/races}}
         </script>
         <script src="lib/mustache.min.js"></script>
         <script src="lib/ranking.js"></script>
