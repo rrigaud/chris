@@ -672,8 +672,8 @@ const DAO = {
         groups.sort(this.rankingCompare);
         // On ajoute maintenant le rank, la progressbar et sa couleur... pour chaque sous-groupe
         var kMax = groups.length;
-        const maxPoints = groups[kMax - 1].points;
         for (var k = 0; k < kMax; k++) {
+            const maxPoints = groups[kMax - 1].points;
             const group = groups[k].group;
             const points = groups[k].points;
             const number = groups[k].number;
@@ -751,8 +751,8 @@ const DAO = {
         subgroups.sort(this.rankingCompare);
         // On ajoute maintenant le rank, la progressbar et sa couleur... pour chaque sous-groupe
         var kMax = subgroups.length;
-        const maxPoints = subgroups[kMax - 1].points;
         for (var k = 0; k < kMax; k++) {
+            const maxPoints = subgroups[kMax - 1].points;
             const group = subgroups[k].group;
             const subgroup = subgroups[k].subgroup;
             const points = subgroups[k].points;
@@ -823,8 +823,8 @@ const DAO = {
         groups.sort(this.rankingCompare);
         // On ajoute maintenant le rank, la progressbar et sa couleur... pour chaque sous-groupe
         var lMax = groups.length;
-        const maxPoints = groups[lMax - 1].points;
         for (var l = 0; l < lMax; l++) {
+            const maxPoints = groups[lMax - 1].points;
             const group = groups[l].group;
             const points = groups[l].points;
             const number = groups[l].number;
@@ -895,8 +895,8 @@ const DAO = {
         subgroups.sort(this.rankingCompare);
         // On ajoute maintenant le rank, la progressbar et sa couleur... pour chaque sous-groupe
         var lMax = subgroups.length;
-        const maxPoints = subgroups[lMax - 1].points;
         for (var l = 0; l < lMax; l++) {
+            const maxPoints = subgroups[lMax - 1].points;
             const group = subgroups[l].group;
             const subgroup = subgroups[l].subgroup;
             const points = subgroups[l].points;
