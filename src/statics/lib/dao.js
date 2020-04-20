@@ -610,7 +610,7 @@ const DAO = {
     */
     rankingGetColor: function (rank) {
         // Tableau plus ou moins dégradé de 12 couleurs
-        const colors = ['red', 'orange', 'yellow', 'lime', 'green', 'teal', 'cyan', 'blue', 'indigo', 'deep-purple', 'brown', 'black'];
+        const colors = ['red', 'orange', 'yellow', 'lime', 'green', 'teal', 'cyan', 'blue', 'indigo', 'deep-purple', 'brown', 'grey-10'];
         // Si plus de 12 groupes, on recommence à donner les premières couleurs, et ainsi de suite
         const index = rank % colors.length - 1;
         const color = colors[index];

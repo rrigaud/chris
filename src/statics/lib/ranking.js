@@ -22,7 +22,7 @@ ipcRenderer.on('datatransfer', (event, data) => {
             if (this.color === 'indigo') { color = '#3f51b5'; }
             if (this.color === 'deep-purple') { color = '#673ab7'; }
             if (this.color === 'brown') { color = '#795548'; }
-            if (this.color === 'black') { color = '#212121'; }
+            if (this.color === 'grey-10') { color = '#212121'; }
             return color;
         }
     });
