@@ -2447,11 +2447,11 @@ export default {
             this.refreshDataRaces();
         },
         /***************************************************************************************************************
-        *  Function : exportRankingPDF
+        *  Function : loadDataRankingExport
         *
-        *  Génère et exporte un PDF des résultats / classements à partir d'un template (dans une fenêtre cachée)
+        *  Charge en mémoire un objet contenant tous les résultats/classements... à utiliser pour export PDF / CSV
         */
-        exportRankingPDF () {
+        loadDataRankingExport () {
             // On doit commencer par formatter toutes les données pour les envoyer proprement à la fenêtre de génération de PDF
             this.dataRankingExport = {};
             this.dataRankingExport.allRacesGroups = DAO.rankingGetGroupsAllRaces();
@@ -2512,6 +2512,14 @@ export default {
                 const race = { name: DAO.data.races[i].name, groups: DAO.rankingGetGroups(DAO.data.races[i].raceID), subgroups: DAO.rankingGetSubgroups(DAO.data.races[i].raceID), runnersCompleted: runnersCompleted, runnersDropped: runnersDropped, runnersMissing: runnersMissing };
                 this.dataRankingExport.races.push(race);
             }
+        },
+        /***************************************************************************************************************
+        *  Function : exportRankingPDF
+        *
+        *  Génère et exporte un PDF des résultats / classements à partir d'un template (dans une fenêtre cachée)
+        */
+        exportRankingPDF () {
+            this.loadDataRankingExport();
             // Ouverture de la fenêtre pour générer les dossards au format HTML (mais cachée)
             const winRanking = new BrowserWindow({ show: false, webPreferences: { nodeIntegration: true, devTools: false } });
             // Chargement du template pour les Dossards
@@ -2569,21 +2577,73 @@ export default {
         /***************************************************************************************************************
         *  Function : exportRankingCSV
         *
-        *  Génère et exporte un CSV des résultats / classements
+        *  Génère et exporte un CSV des résultats / classements (sur 16 colonnes, le plus "rangé possible")
         */
         exportRankingCSV () {
+            this.loadDataRankingExport();
             // On sélectionne l'emplacement du fichier CSV à créer
             dialog.showSaveDialog({
-                title: 'Exporter les dossards au format CSV',
+                title: 'Exporter les résultats au format CSV',
                 buttonLabel: 'Enregistrer',
                 filters: [{ name: 'CSV', extensions: ['csv'] }, { name: 'Tous les fichiers', extensions: ['*'] }]
             }).then(result => {
                 if (result.filePath && result.filePath.length > 0) {
                     const csvFile = result.filePath;
                     const csvRows = [];
-                    const iMax = this.selectedRunners.length;
+                    // TOUTES COURSES CONFONDUES
+                    csvRows.push(['**********', 'TOUTES COURSES CONFONDUES', '**********', '**********', '**********', '**********', '**********', '**********', '', '', '', '', '', '', '', '']);
+                    csvRows.push(['***', 'Résultats par groupe', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                    csvRows.push(['Classement', 'Groupe', 'Nombre de coureurs comptabilisés', 'Vérification', 'Points']);
+                    const iMax = this.dataRankingExport.allRacesGroups.length;
                     for (var i = 0; i < iMax; i++) {
-                        csvRows.push([this.selectedRunners[i].name, this.selectedRunners[i].gender, this.selectedRunners[i].group, this.selectedRunners[i].subgroup, this.selectedRunners[i].bibNumber]);
+                        csvRows.push([this.dataRankingExport.allRacesGroups[i].rank, this.dataRankingExport.allRacesGroups[i].group, this.dataRankingExport.allRacesGroups[i].number, this.dataRankingExport.allRacesGroups[i].numberColor, this.dataRankingExport.allRacesGroups[i].points]);
+                    }
+                    csvRows.push(['***', '***', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                    csvRows.push(['***', 'Résultats par sous-groupe', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                    csvRows.push(['Classement', 'Sous-Groupe', 'Groupe', 'Nombre de coureurs comptabilisés', 'Vérification', 'Points']);
+                    const jMax = this.dataRankingExport.allRacesSubgroups.length;
+                    for (var j = 0; j < jMax; j++) {
+                        csvRows.push([this.dataRankingExport.allRacesSubgroups[j].rank, this.dataRankingExport.allRacesSubgroups[j].subgroup, this.dataRankingExport.allRacesSubgroups[j].group, this.dataRankingExport.allRacesSubgroups[j].number, this.dataRankingExport.allRacesSubgroups[j].numberColor, this.dataRankingExport.allRacesSubgroups[j].points]);
+                    }
+                    // POUR CHAQUE COURSE
+                    const kMax = this.dataRankingExport.races.length;
+                    for (var k = 0; k < kMax; k++) {
+                        csvRows.push(['**********', '**********', '**********', '**********', '**********', '**********', '**********', '**********', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['******', this.dataRankingExport.races[k].name, '**********', '**********', '**********', '**********', '**********', '**********', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['***', 'Résultats par groupe', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['Classement', 'Groupe', 'Nombre de coureurs comptabilisés', 'Vérification', 'Points']);
+                        const lMax = this.dataRankingExport.races[k].groups.length;
+                        for (var l = 0; l < lMax; l++) {
+                            csvRows.push([this.dataRankingExport.races[k].groups[l].rank, this.dataRankingExport.races[k].groups[l].group, this.dataRankingExport.races[k].groups[l].number, this.dataRankingExport.races[k].groups[l].numberColor, this.dataRankingExport.races[k].groups[l].points]);
+                        }
+                        csvRows.push(['***', '***', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['***', 'Résultats par sous-groupe', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['Classement', 'Sous-Groupe', 'Groupe', 'Nombre de coureurs comptabilisés', 'Vérification', 'Points']);
+                        const mMax = this.dataRankingExport.races[k].subgroups.length;
+                        for (var m = 0; m < mMax; m++) {
+                            csvRows.push([this.dataRankingExport.races[k].subgroups[m].rank, this.dataRankingExport.races[k].subgroups[m].subgroup, this.dataRankingExport.races[k].subgroups[m].group, this.dataRankingExport.races[k].subgroups[m].number, this.dataRankingExport.races[k].subgroups[m].numberColor, this.dataRankingExport.races[k].subgroups[m].points]);
+                        }
+                        csvRows.push(['***', '***', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['***', 'Résultats individuels', 'Classement Final', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['Classement', 'Coureur', 'Groupe', 'Sous-Groupe']);
+                        const nMax = this.dataRankingExport.races[k].runnersCompleted.length;
+                        for (var n = 0; n < nMax; n++) {
+                            csvRows.push([this.dataRankingExport.races[k].runnersCompleted[n].rank, this.dataRankingExport.races[k].runnersCompleted[n].name, this.dataRankingExport.races[k].runnersCompleted[n].group, this.dataRankingExport.races[k].runnersCompleted[n].subgroup]);
+                        }
+                        csvRows.push(['***', '***', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['***', 'Résultats individuels', 'Abandons', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['Classement', 'Coureur', 'Groupe', 'Sous-Groupe']);
+                        const oMax = this.dataRankingExport.races[k].runnersDropped.length;
+                        for (var o = 0; o < oMax; o++) {
+                            csvRows.push([this.dataRankingExport.races[k].runnersDropped[o].rank, this.dataRankingExport.races[k].runnersDropped[o].name, this.dataRankingExport.races[k].runnersDropped[o].group, this.dataRankingExport.races[k].runnersDropped[o].subgroup]);
+                        }
+                        csvRows.push(['***', '***', '***', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['***', 'Résultats individuels', 'Absents', '***', '***', '***', '***', '***', '', '', '', '', '', '', '', '']);
+                        csvRows.push(['Classement', 'Coureur', 'Groupe', 'Sous-Groupe']);
+                        const pMax = this.dataRankingExport.races[k].runnersMissing.length;
+                        for (var p = 0; p < pMax; p++) {
+                            csvRows.push([this.dataRankingExport.races[k].runnersMissing[p].rank, this.dataRankingExport.races[k].runnersMissing[p].name, this.dataRankingExport.races[k].runnersMissing[p].group, this.dataRankingExport.races[k].runnersMissing[p].subgroup]);
+                        }
                     }
                     // Utilisation de fast-csv
                     csv.writeToPath(csvFile, csvRows)
@@ -2596,14 +2656,6 @@ export default {
                                 icon: 'view_week',
                                 position: 'bottom'
                             });
-                            // On cache les actions pour les coureurs sélectionnés
-                            this.cardRunnersActions = false;
-                            // On rafraichit l'interface
-                            this.selectedRunners = [];
-                            // BUGFIX : Pour rafraichir l'interface sur une édition... obligé de filtrer n'importe quoi...
-                            this.filterRunners = 'Chargement...';
-                            // Puis de rafraichir en laissant quelques millisecondes...
-                            setTimeout(this.refreshData, 200);
                         });
                 }
             }).catch(err => {
