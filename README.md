@@ -7,6 +7,8 @@ Les résultats sont ensuite présentés par course : Individuels et par groupe /
 
 ## Captures d'écran
 
+[![CHRIS - Saisie des résultats](https://github.com/rrigaud/chris/blob/master/docs/screenshots/2.0.0/results.png)](https://github.com/rrigaud/chris)
+
 [![CHRIS - Classements](https://github.com/rrigaud/chris/blob/master/docs/screenshots/2.0.0/ranking-subgroups.png)](https://github.com/rrigaud/chris)
 
 [![CHRIS - Dossards](https://github.com/rrigaud/chris/blob/master/docs/screenshots/2.0.0/pdf-bibnumbers.png)](https://github.com/rrigaud/chris)
