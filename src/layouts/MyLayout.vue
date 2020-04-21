@@ -2059,9 +2059,9 @@ export default {
                     const importRunnerID = DAO.runnersGetNewRunnerID();
                     // Ajout du coureur
                     DAO.runnersAdd(importRunnerID.toString(), name, gender, group, subgroup, bibNumber);
-                    // On rafraichit l'interface
-                    this.refreshDataRunners();
                 }
+                // On rafraichit l'interface
+                this.refreshDataRunners();
                 // On enregistre le fichier
                 DAO.save();
                 this.dialogImportCSV = false;
